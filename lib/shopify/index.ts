@@ -59,7 +59,7 @@ const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 type ExtractVariables<T> = T extends { variables: object } ? T['variables'] : never;
 
 export async function shopifyFetch<T>({
-  cache = 'force-cache',
+  cache = 'no-store',
   headers,
   query,
   tags,
@@ -447,4 +447,53 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });
+}
+
+
+export async function getSliderMetaObject() {
+  const query = `query SliderQuery {
+    metaobject(handle: {handle: "slider_of_cat", type: "slider"}) {
+      field(key: "Slides") {
+        key
+        references(first: 10) {
+          nodes {
+            ... on Metaobject {
+              fields {
+                key
+                value
+                reference {
+                  ... on MediaImage {
+                    image {
+                      url
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`
+  const res =await shopifyFetch<any>({query,cache:'no-cache'})
+  const data = res.body.data.metaobject.field.references.nodes.map((item:any) => {
+    let returnobject:any = {
+      key: "",
+      value: ""
+    };
+    item.fields.forEach((item:any)=>{
+      returnobject["key"] = item.key
+      if (item.reference != null) {
+        returnobject["value"] = item.reference.image.url
+      } else {
+        returnobject["value"] = item.value
+      }
+      returnobject["value"] = item.value;
+      
+    })
+    return returnobject;
+  })
+  return data;
+  
 }
