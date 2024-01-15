@@ -477,23 +477,93 @@ export async function getSliderMetaObject() {
   }
 `
   const res =await shopifyFetch<any>({query,cache:'no-cache'})
-  const data = res.body.data.metaobject.field.references.nodes.map((item:any) => {
-    let returnobject:any = {
-      key: "",
-      value: ""
-    };
-    item.fields.forEach((item:any)=>{
-      returnobject["key"] = item.key
-      if (item.reference != null) {
-        returnobject["value"] = item.reference.image.url
-      } else {
-        returnobject["value"] = item.value
+  // console.log("RES", res.body.data.metaobject.field.references.nodes)
+  const data = res.body.data.metaobject.field.references.nodes;
+  // console.log("DATA", data)
+  const  results :any = [];
+  data.forEach((item:any)=> {
+    const result ={
+      cat: "",
+      descrption : "",
+      imageUrl : ""
+    }
+ 
+    item.fields.forEach((fieldItem : any ) => {
+      switch(fieldItem.key){
+        case "cat":
+          result.cat = fieldItem.value
+          break;
+        case "descrption":
+          result.descrption = fieldItem.value
+          break;
+        case "image":
+          result.imageUrl = fieldItem.reference.image.url
+          break;
+        default:
+          break;
       }
-      returnobject["value"] = item.value;
-      
-    })
-    return returnobject;
+    });
+
+    results.push(result);
+
+})
+    // console.log("Results", results);
+    
+  return results;
+}
+
+export async function getHeroSection(){
+
+  const query = `query HeroQuery {
+    metaobject(handle: {handle: "hero-section-handle", type: "hero_section"}) {
+      fields {
+        value
+        key
+        reference {
+          ... on MediaImage {
+            image {
+              url
+            }
+          }
+        }
+      }
+    }
+  }`
+  const res =await shopifyFetch<any>({query,cache:'no-cache'})
+
+  const data = res.body.data.metaobject.fields
+  // console.log("RES", data)
+  const results :any = [];
+
+  data.forEach((item:any)=> {
+    const result ={
+      text : "",
+      heading : "",
+      imageUrl : ""
+    }
+
+    item.fields.forEach((fieldItem : any ) => {
+      switch(fieldItem.key){
+        case "text":
+          result.text = fieldItem.value
+          break;
+        case "heading":
+          result.heading = fieldItem.value
+          break;
+        case "heroimg":
+          result.imageUrl = fieldItem.reference.image.url
+          break;
+        default:
+          break;
+      }
+    });
+
+    results.push(result);
+
   })
-  return data;
-  
+
+  console.log("Results", results);
+  return results;
+    
+   
 }
